@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioMSA — Множественное выравнивание геномных последовательностей</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --primary: #0ea47a;
+        }
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .bio-gradient {
+            background: linear-gradient(135deg, #0ea47a 0%, #059669 100%);
+        }
+
+        .section-header {
+            font-size: 2.25rem;
+            line-height: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .modern-card {
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                        box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        
+        .modern-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        .nav-active {
+            color: #0ea47a;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            transition: width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        .sequence-header {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.75rem;
+        }
+
+        .metric {
+            background: linear-gradient(white, white);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+        }
+
+        .task-card {
+            transition: all 0.2s ease;
+        }
+
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .form-input {
+            transition: all 0.2s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(14, 164, 122, 0.15);
+            border-color: #0ea47a;
+        }
+
+        .scientific-bg {
+            background-image: 
+                linear-gradient(rgba(15, 23, 42, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-screen-xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-10 h-10 bio-gradient rounded-2xl flex items-center justify-center shadow-inner">
+                        <i class="fa-solid fa-dna text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-display text-3xl font-semibold tracking-tighter">BioMSA</span>
+                        <span class="text-emerald-600 text-sm font-medium ml-1">v0.9</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-x-2 text-sm">
+                    <a href="/docs" target="_blank" 
+                       class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl flex items-center gap-x-2 transition-colors">
+                        <i class="fa-solid fa-book text-xs"></i>
+                        <span>API Docs</span>
+                    </a>
+                    <a href="http://localhost:5555" target="_blank"
+                       class="px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl flex items-center gap-x-2 transition-colors">
+                        <i class="fa-solid fa-chart-line text-xs"></i>
+                        <span>Flower</span>
+                    </a>
+                    <div class="h-6 w-px bg-slate-200 mx-1"></div>
+                    <div class="flex items-center gap-x-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-2xl text-xs font-medium">
+                        <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <span>Сервис работает</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="max-w-screen-xl mx-auto px-6 pt-12 pb-8">
+        <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-emerald-100 text-emerald-700 text-sm font-medium mb-6">
+                <i class="fa-solid fa-flask"></i>
+                <span>Прототип • Готов к использованию</span>
+            </div>
+            
+            <h1 class="section-header tracking-tighter text-slate-900">
+                Множественное выравнивание<br>
+                <span class="text-emerald-600">геномных последовательностей</span>
+            </h1>
+            <p class="mt-4 text-xl text-slate-600 max-w-lg">
+                Скачивайте данные из NCBI, Ensembl и других баз, 
+                выравнивайте с помощью MAFFT / Clustal Omega / MUSCLE 
+                и получайте консенсусную последовательность в пару кликов.
+            </p>
+            
+            <div class="flex items-center gap-x-3 mt-8">
+                <button onclick="document.getElementById('form-section').scrollIntoView({ behavior: 'smooth' })" 
+                        class="px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 transition-all text-white font-semibold rounded-3xl flex items-center gap-x-3 shadow-lg shadow-emerald-600/30">
+                    <span>Начать выравнивание</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+                <button onclick="fillDemoForm()" 
+                        class="px-6 py-3.5 border border-slate-300 hover:bg-white transition-all font-medium rounded-3xl flex items-center gap-x-2 text-slate-700">
+                    <i class="fa-solid fa-magic"></i>
+                    <span>Заполнить демо</span>
+                </button>
+            </div>
+            
+            <div class="flex items-center gap-x-6 mt-6 text-sm text-slate-500">
+                <div class="flex items-center gap-x-1.5">
+                    <i class="fa-solid fa-check text-emerald-500"></i>
+                    <span>Асинхронно</span>
+                </div>
+                <div class="flex items-center gap-x-1.5">
+                    <i class="fa-solid fa-check text-emerald-500"></i>
+                    <span>До 5000 последовательностей</span>
+                </div>
+                <div class="flex items-center gap-x-1.5">
+                    <i class="fa-solid fa-check text-emerald-500"></i>
+                    <span>Docker-ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form Section -->
+    <div id="form-section" class="max-w-screen-xl mx-auto px-6 pb-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Form -->
+            <div class="lg:col-span-7">
+                <div class="modern-card bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-900/5 p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-semibold tracking-tight">Новая задача</h2>
+                            <p class="text-slate-500 text-sm mt-1">Заполните параметры выравнивания</p>
+                        </div>
+                        <div class="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-2xl flex items-center gap-x-1.5">
+                            <i class="fa-solid fa-robot"></i>
+                            <span>AI-ready</span>
+                        </div>
+                    </div>
+
+                    <form id="msa-form" onsubmit="submitTask(event)">
+                        <!-- Organism -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Организм / Таксон <span class="text-red-500">*</span></label>
+                            <input type="text" id="organism" required
+                                   class="form-input w-full px-4 py-3 border border-slate-300 rounded-2xl text-lg focus:border-emerald-500"
+                                   placeholder="Escherichia coli" value="Escherichia coli">
+                            
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button type="button" onclick="quickFill('Escherichia coli', 'rpoB')" 
+                                        class="text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors">E. coli + rpoB</button>
+                                <button type="button" onclick="quickFill('Mycobacterium tuberculosis', 'rpoB')" 
+                                        class="text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors">M. tuberculosis + rpoB</button>
+                                <button type="button" onclick="quickFill('SARS-CoV-2', 'spike')" 
+                                        class="text-xs px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-colors">SARS-CoV-2 + spike</button>
+                            </div>
+                        </div>
+
+                        <!-- Gene -->
+                        <div class="mb-5">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Ген (опционально)</label>
+                            <input type="text" id="gene" 
+                                   class="form-input w-full px-4 py-3 border border-slate-300 rounded-2xl"
+                                   placeholder="rpoB, 16S, recA, gyrB...">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <!-- Sequence Type -->
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Тип последовательностей</label>
+                                <div class="flex rounded-2xl border border-slate-300 p-1 bg-slate-50">
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="sequence_type" value="gene" checked class="peer hidden">
+                                        <div class="peer-checked:bg-white peer-checked:shadow-sm text-center py-2.5 rounded-[14px] text-sm font-medium transition-all">Ген</div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="sequence_type" value="genome" class="peer hidden">
+                                        <div class="peer-checked:bg-white peer-checked:shadow-sm text-center py-2.5 rounded-[14px] text-sm font-medium transition-all">Геном</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Alignment Tool -->
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Инструмент выравнивания</label>
+                                <select id="alignment_tool" class="form-input w-full px-4 py-3 border border-slate-300 rounded-2xl bg-white">
+                                    <option value="mafft">MAFFT (рекомендуется)</option>
+                                    <option value="clustalo">Clustal Omega</option>
+                                    <option value="muscle">MUSCLE v5</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Sources -->
+                        <div class="mt-5">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Источники данных</label>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="flex items-center gap-x-2 px-4 py-2.5 border border-emerald-200 bg-emerald-50 rounded-2xl cursor-pointer">
+                                    <input type="checkbox" id="source_ncbi" checked class="accent-emerald-600 w-4 h-4">
+                                    <span class="font-medium text-sm">NCBI</span>
+                                </label>
+                                <label class="flex items-center gap-x-2 px-4 py-2.5 border border-slate-200 rounded-2xl cursor-pointer opacity-60">
+                                    <input type="checkbox" id="source_ensembl" disabled class="accent-emerald-600 w-4 h-4">
+                                    <span class="font-medium text-sm">Ensembl <span class="text-[10px]">(скоро)</span></span>
+                                </label>
+                                <label class="flex items-center gap-x-2 px-4 py-2.5 border border-slate-200 rounded-2xl cursor-pointer opacity-60">
+                                    <input type="checkbox" id="source_ebi" disabled class="accent-emerald-600 w-4 h-4">
+                                    <span class="font-medium text-sm">EBI <span class="text-[10px]">(скоро)</span></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Max sequences + Demo toggle -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-5 gap-5 items-end">
+                            <div class="md:col-span-3">
+                                <label class="block text-sm font-semibold text-slate-700 mb-2">Максимум последовательностей</label>
+                                <div class="flex items-center gap-x-4">
+                                    <input type="range" id="max_sequences_range" min="10" max="500" step="10" value="100" 
+                                           class="flex-1 accent-emerald-600" oninput="document.getElementById('max_sequences').value = this.value">
+                                    <input type="number" id="max_sequences" value="100" min="10" max="500"
+                                           class="w-20 px-3 py-2 border border-slate-300 rounded-2xl text-center font-mono">
+                                </div>
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label class="flex items-center gap-x-3 cursor-pointer bg-white border border-emerald-200 rounded-2xl px-4 py-3">
+                                    <div>
+                                        <input type="checkbox" id="use_mock_data" class="accent-emerald-600 w-5 h-5">
+                                    </div>
+                                    <div class="text-sm">
+                                        <div class="font-semibold text-emerald-700">Демо-режим</div>
+                                        <div class="text-emerald-600 text-xs">Без интернета • Мгновенно</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" id="submit-btn"
+                                class="mt-8 w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 transition-all text-white font-semibold text-lg rounded-3xl flex items-center justify-center gap-x-3 shadow-lg shadow-emerald-600/40">
+                            <i class="fa-solid fa-play mr-1"></i>
+                            <span id="submit-text">Запустить выравнивание</span>
+                        </button>
+                        
+                        <p class="text-center text-xs text-slate-400 mt-3">Задача будет выполнена в фоне. Вы можете закрыть вкладку.</p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Sidebar -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="bg-white border border-slate-200 rounded-3xl p-6 modern-card">
+                    <h3 class="font-semibold flex items-center gap-x-2 mb-4">
+                        <i class="fa-solid fa-info-circle text-emerald-600"></i>
+                        <span>Как это работает</span>
+                    </h3>
+                    <div class="space-y-4 text-sm">
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex-shrink-0 flex items-center justify-center text-xs font-bold">1</div>
+                            <div>Скачиваем последовательности из выбранных баз данных</div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex-shrink-0 flex items-center justify-center text-xs font-bold">2</div>
+                            <div>Объединяем в один FASTA-файл</div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex-shrink-0 flex items-center justify-center text-xs font-bold">3</div>
+                            <div>Выполняем множественное выравнивание</div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex-shrink-0 flex items-center justify-center text-xs font-bold">4</div>
+                            <div>Строим консенсусную последовательность</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-6 text-sm">
+                    <div class="flex items-center gap-x-2 mb-3">
+                        <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+                        <span class="font-semibold">Безопасно и масштабируемо</span>
+                    </div>
+                    <ul class="text-slate-300 space-y-1.5 text-xs">
+                        <li>• Полная изоляция задач в Docker</li>
+                        <li>• Ограничение по времени и количеству seq</li>
+                        <li>• Результаты хранятся локально</li>
+                        <li>• Celery + Redis + PostgreSQL</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Task Panel (appears after submit) -->
+    <div id="current-task-panel" class="hidden max-w-screen-xl mx-auto px-6 pb-12">
+        <div class="modern-card bg-white border border-emerald-200 rounded-3xl p-8 shadow-xl">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-x-3">
+                    <div class="w-9 h-9 bg-emerald-600 text-white rounded-2xl flex items-center justify-center">
+                        <i class="fa-solid fa-tasks"></i>
+                    </div>
+                    <div>
+                        <div class="font-semibold text-xl">Текущая задача</div>
+                        <div id="current-task-id" class="font-mono text-xs text-emerald-600"></div>
+                    </div>
+                </div>
+                <button onclick="hideCurrentTask()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div id="task-progress-container">
+                <div class="flex justify-between text-sm mb-2">
+                    <div id="current-step" class="font-medium text-emerald-700">Инициализация...</div>
+                    <div id="progress-percent" class="font-mono text-emerald-600">0%</div>
+                </div>
+                <div class="h-3 bg-emerald-100 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="progress-bar h-3 bg-emerald-600 rounded-full w-0 transition-all" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="task-success" class="hidden mt-6">
+                <div class="flex items-center gap-x-2 text-emerald-600 mb-4">
+                    <i class="fa-solid fa-check-circle text-2xl"></i>
+                    <span class="font-semibold text-lg">Выравнивание успешно завершено!</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="downloadFile('input.fasta')" 
+                            class="flex items-center justify-center gap-x-2 px-5 py-3 bg-white border border-slate-300 hover:bg-slate-50 rounded-2xl text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Исходный FASTA</span>
+                    </button>
+                    <button onclick="downloadFile('aligned.fasta')" 
+                            class="flex items-center justify-center gap-x-2 px-5 py-3 bg-emerald-600 text-white hover:bg-emerald-700 rounded-2xl text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-align-left"></i>
+                        <span>Выровненный FASTA</span>
+                    </button>
+                    <button onclick="downloadFile('consensus.fasta')" 
+                            class="flex items-center justify-center gap-x-2 px-5 py-3 bg-white border border-emerald-300 hover:bg-emerald-50 text-emerald-700 rounded-2xl text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Консенсус</span>
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-xs text-slate-500 flex items-center gap-x-2">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Файлы также доступны через API: <code class="font-mono">/download/{task_id}/...</code></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="max-w-screen-xl mx-auto px-6 pb-16">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold tracking-tight">Последние задачи</h2>
+            <button onclick="loadRecentTasks()" 
+                    class="flex items-center gap-x-2 text-sm px-4 py-2 hover:bg-white border border-slate-200 rounded-2xl transition-colors">
+                <i class="fa-solid fa-sync-alt"></i>
+                <span>Обновить</span>
+            </button>
+        </div>
+        
+        <div id="recent-tasks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white py-8">
+        <div class="max-w-screen-xl mx-auto px-6 text-center text-xs text-slate-400">
+            BioMSA Server • FastAPI + Celery + PostgreSQL + Biopython • 
+            <span class="font-mono">Docker Compose ready</span>
+        </div>
+    </footer>
+
+    <script>
+        // Tailwind script
+        function initializeTailwind() {
+            document.documentElement.style.setProperty('--accent', '#0ea47a');
+        }
+        
+        // Quick fill examples
+        function quickFill(organism, gene) {
+            document.getElementById('organism').value = organism;
+            document.getElementById('gene').value = gene || '';
+            document.getElementById('use_mock_data').checked = true;
+            document.getElementById('form-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        function fillDemoForm() {
+            document.getElementById('organism').value = 'Escherichia coli';
+            document.getElementById('gene').value = 'rpoB';
+            document.getElementById('use_mock_data').checked = true;
+            document.getElementById('max_sequences').value = 40;
+            document.getElementById('max_sequences_range').value = 40;
+            document.getElementById('alignment_tool').value = 'mafft';
+        }
+
+        // Submit task
+        async function submitTask(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('submit-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Отправка...`;
+            
+            const sources = [];
+            if (document.getElementById('source_ncbi').checked) sources.push('ncbi');
+            // Ensembl and EBI are disabled for now
+            
+            const payload = {
+                organism: document.getElementById('organism').value.trim(),
+                gene: document.getElementById('gene').value.trim() || null,
+                sources: sources.length > 0 ? sources : ['ncbi'],
+                alignment_tool: document.getElementById('alignment_tool').value,
+                max_sequences: parseInt(document.getElementById('max_sequences').value),
+                use_mock_data: document.getElementById('use_mock_data').checked,
+                sequence_type: document.querySelector('input[name="sequence_type"]:checked').value
+            };
+            
+            try {
+                const response = await fetch('/msa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) throw new Error('Ошибка создания задачи');
+                
+                const data = await response.json();
+                
+                // Show current task panel
+                showCurrentTask(data.task_id);
+                
+                // Start polling
+                startPolling(data.task_id);
+                
+                // Refresh recent tasks
+                setTimeout(loadRecentTasks, 1500);
+                
+            } catch (error) {
+                alert('Ошибка: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+        
+        let currentPollInterval = null;
+        let currentTaskId = null;
+        
+        function showCurrentTask(taskId) {
+            currentTaskId = taskId;
+            document.getElementById('current-task-panel').classList.remove('hidden');
+            document.getElementById('current-task-id').textContent = taskId;
+            document.getElementById('progress-bar').style.width = '5%';
+            document.getElementById('progress-percent').textContent = '5%';
+            document.getElementById('current-step').textContent = 'Задача принята в обработку...';
+            document.getElementById('task-success').classList.add('hidden');
+            document.getElementById('task-progress-container').classList.remove('hidden');
+            
+            // Scroll to it
+            document.getElementById('current-task-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        function hideCurrentTask() {
+            document.getElementById('current-task-panel').classList.add('hidden');
+            if (currentPollInterval) {
+                clearInterval(currentPollInterval);
+                currentPollInterval = null;
+            }
+        }
+        
+        function startPolling(taskId) {
+            if (currentPollInterval) clearInterval(currentPollInterval);
+            
+            currentPollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/status/${taskId}`);
+                    if (!res.ok) return;
+                    
+                    const task = await res.json();
+                    
+                    // Update UI
+                    const progressEl = document.getElementById('progress-bar');
+                    const percentEl = document.getElementById('progress-percent');
+                    const stepEl = document.getElementById('current-step');
+                    
+                    progressEl.style.width = `${task.progress || 0}%`;
+                    percentEl.textContent = `${task.progress || 0}%`;
+                    stepEl.textContent = task.current_step || 'Обработка...';
+                    
+                    if (task.status === 'SUCCESS') {
+                        clearInterval(currentPollInterval);
+                        document.getElementById('task-progress-container').classList.add('hidden');
+                        document.getElementById('task-success').classList.remove('hidden');
+                        
+                        // Auto refresh recent tasks
+                        loadRecentTasks();
+                        
+                    } else if (task.status === 'FAILURE') {
+                        clearInterval(currentPollInterval);
+                        stepEl.innerHTML = `<span class="text-red-600">Ошибка: ${task.error_message || 'Неизвестная ошибка'}</span>`;
+                        progressEl.style.backgroundColor = '#ef4444';
+                    }
+                    
+                } catch (e) {
+                    console.error('Polling error', e);
+                }
+            }, 2200);
+        }
+        
+        // Download file
+        function downloadFile(filename) {
+            if (!currentTaskId) {
+                alert('Нет активной задачи');
+                return;
+            }
+            const url = `/download/${currentTaskId}/${filename}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        // Load recent tasks
+        async function loadRecentTasks() {
+            const container = document.getElementById('recent-tasks');
+            container.innerHTML = `
+                <div class="col-span-full flex justify-center py-8">
+                    <i class="fa-solid fa-spinner fa-spin text-emerald-600 text-2xl"></i>
+                </div>
+            `;
+            
+            try {
+                const res = await fetch('/tasks?limit=6');
+                const tasks = await res.json();
+                
+                container.innerHTML = '';
+                
+                if (tasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8 text-slate-400">
+                            <i class="fa-solid fa-inbox text-4xl mb-3 opacity-40"></i>
+                            <p>Пока нет выполненных задач</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                tasks.forEach(task => {
+                    const card = document.createElement('div');
+                    card.className = `task-card bg-white border border-slate-200 rounded-3xl p-5 modern-card`;
+                    
+                    let statusHTML = '';
+                    if (task.status === 'SUCCESS') {
+                        statusHTML = `<span class="status-badge bg-emerald-100 text-emerald-700">Готово</span>`;
+                    } else if (task.status === 'FAILURE') {
+                        statusHTML = `<span class="status-badge bg-red-100 text-red-700">Ошибка</span>`;
+                    } else {
+                        statusHTML = `<span class="status-badge bg-amber-100 text-amber-700">${task.status}</span>`;
+                    }
+                    
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="font-semibold text-lg tracking-tight">${task.organism}</div>
+                                ${task.gene ? `<div class="text-emerald-600 text-sm font-medium">${task.gene}</div>` : ''}
+                            </div>
+                            ${statusHTML}
+                        </div>
+                        
+                        <div class="text-xs text-slate-500 mb-4 flex items-center gap-x-2">
+                            <span>${task.alignment_tool}</span> • 
+                            <span>${task.num_sequences || 0} seq</span>
+                        </div>
+                        
+                        ${task.status === 'SUCCESS' && task.result_files ? `
+                            <div class="flex gap-2">
+                                <button onclick="downloadFromTask('${task.task_id}', 'aligned.fasta')" 
+                                        class="flex-1 text-xs py-2 bg-emerald-600 text-white rounded-2xl hover:bg-emerald-700 transition-colors flex items-center justify-center gap-x-1">
+                                    <i class="fa-solid fa-download fa-xs"></i>
+                                    <span>Выравнивание</span>
+                                </button>
+                                <button onclick="downloadFromTask('${task.task_id}', 'consensus.fasta')" 
+                                        class="flex-1 text-xs py-2 border border-emerald-300 text-emerald-700 rounded-2xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-x-1">
+                                    <i class="fa-solid fa-download fa-xs"></i>
+                                    <span>Консенсус</span>
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="mt-3 text-[10px] text-slate-400 font-mono">
+                            ${new Date(task.created_at).toLocaleString('ru-RU', {hour:'2-digit', minute:'2-digit'})}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                
+            } catch (e) {
+                container.innerHTML = `<div class="text-red-500 text-sm">Не удалось загрузить задачи</div>`;
+            }
+        }
+        
+        function downloadFromTask(taskId, filename) {
+            const url = `/download/${taskId}/${filename}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+        
+        // Initialize everything
+        function initializeApp() {
+            initializeTailwind();
+            
+            // Sync range and number input
+            const range = document.getElementById('max_sequences_range');
+            const number = document.getElementById('max_sequences');
+            
+            range.addEventListener('input', () => number.value = range.value);
+            number.addEventListener('input', () => range.value = number.value);
+            
+            // Load recent tasks on start
+            loadRecentTasks();
+            
+            // Optional: auto-fill demo if URL has ?demo=1
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('demo') === '1') {
+                setTimeout(fillDemoForm, 800);
+            }
+            
+            // Keyboard shortcut hint
+            console.log('%c[BioMSA] UI initialized. Press Cmd/Ctrl + K to focus form.', 'color:#64748b');
+        }
+        
+        // Boot
+        window.onload = initializeApp;
+        
+        // Easter egg: Konami code or just console message
+        console.log('%c[BioMSA] Полноценный веб-интерфейс загружен. Готов к работе!', 'color:#0ea47a; font-size: 9px');
+    </script>
+</body>
+</html>

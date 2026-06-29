@@ -1,0 +1,104 @@
+digraph BioMSA_Architecture {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Helvetica", fontsize=10];
+    edge [fontname="Helvetica", fontsize=9, color="#555555"];
+    
+    // Пользователь
+    User [label="Пользователь\n(Postman / curl / Web UI)", shape=ellipse, fillcolor="#E3F2FD", style=filled];
+    
+    // FastAPI
+    subgraph cluster_api {
+        label="FastAPI Web Service (порт 8000)";
+        style=rounded;
+        color="#1976D2";
+        
+        FastAPI [label="FastAPI\n/main.py\n- POST /msa\n- GET /status/{id}\n- GET /download/{id}/file", fillcolor="#BBDEFB", style=filled];
+        Pydantic [label="Pydantic Schemas\n(валидация)", fillcolor="#E3F2FD"];
+        SQLAlchemy [label="SQLAlchemy ORM\n(Task модель)", fillcolor="#E3F2FD"];
+    }
+    
+    // Celery
+    subgraph cluster_celery {
+        label="Celery Worker (асинхронная обработка)";
+        style=rounded;
+        color="#388E3C";
+        
+        CeleryTask [label="Celery Task\nrun_msa_pipeline()\n( tasks.py )", fillcolor="#C8E6C9", style=filled];
+        Pipeline [label="Pipeline Steps:\n1. Адаптеры (скачивание)\n2. merge_fasta\n3. run_alignment (MAFFT/Clustal/MUSCLE)\n4. build_consensus (Biopython)\n5. Сохранение результатов", fillcolor="#DCEDC8"];
+    }
+    
+    // Брокер и БД
+    Redis [label="Redis\n(брокер + результат)\nпорт 6379", shape=cylinder, fillcolor="#FFF9C4", style=filled];
+    Postgres [label="PostgreSQL\n(метаданные задач)\nпорт 5432", shape=cylinder, fillcolor="#FFCCBC", style=filled];
+    
+    // Адаптеры
+    subgraph cluster_adapters {
+        label="Модульные Адаптеры (app/adapters/)";
+        style=rounded;
+        color="#7B1FA2";
+        
+        BaseAdapter [label="BaseDataAdapter\n(абстрактный)", fillcolor="#E1BEE7"];
+        NCBI [label="NCBIAdapter\n(Entrez + Biopython)", fillcolor="#F3E5F5"];
+        Mock [label="MockDataAdapter\n(для демо/тестов)", fillcolor="#F3E5F5"];
+        Ensembl [label="EnsemblAdapter\n(заглушка)", fillcolor="#FCE4EC"];
+        EBI [label="EBIAdapter\n(заглушка)", fillcolor="#FCE4EC"];
+    }
+    
+    // Утилиты
+    subgraph cluster_utils {
+        label="Utils (sequence_utils.py)";
+        style=rounded;
+        color="#00796B";
+        
+        Merge [label="merge_fasta_files()"];
+        Align [label="run_alignment()\n(subprocess)"];
+        Consensus [label="build_consensus()\n(Bio.AlignInfo)"];
+    }
+    
+    // Внешние источники
+    subgraph cluster_external {
+        label="Внешние источники данных";
+        style=rounded;
+        color="#D84315";
+        
+        NCBI_API [label="NCBI (GenBank/RefSeq)\nEntrez E-utilities", shape=box3d, fillcolor="#FFCCBC"];
+        EnsemblAPI [label="Ensembl REST API", shape=box3d, fillcolor="#FFCCBC"];
+        EBIAPI [label="EBI dbfetch / ENA", shape=box3d, fillcolor="#FFCCBC"];
+    }
+    
+    // Мониторинг
+    Flower [label="Flower\n(мониторинг Celery)\nпорт 5555", shape=ellipse, fillcolor="#B2DFDB", style=filled];
+    
+    // Связи
+    User -> FastAPI [label="POST /msa\n(organism, gene, sources...)"];
+    FastAPI -> Postgres [label="CREATE Task (PENDING)"];
+    FastAPI -> Redis [label="enqueue task"];
+    Redis -> CeleryTask [label="consume"];
+    
+    CeleryTask -> Pipeline;
+    Pipeline -> BaseAdapter [label="fetch_sequences()"];
+    BaseAdapter -> NCBI [style=dashed];
+    BaseAdapter -> Mock [style=dashed];
+    BaseAdapter -> Ensembl [style=dashed];
+    BaseAdapter -> EBI [style=dashed];
+    
+    NCBI -> NCBI_API [label="esearch + efetch"];
+    Ensembl -> EnsemblAPI;
+    EBI -> EBIAPI;
+    
+    Pipeline -> Merge [label="raw FASTA → input.fasta"];
+    Merge -> Align [label="выравнивание"];
+    Align -> Consensus [label="consensus.fasta"];
+    
+    CeleryTask -> Postgres [label="UPDATE status + paths"];
+    CeleryTask -> Redis [label="task result"];
+    
+    FastAPI -> Postgres [label="query status"];
+    User -> FastAPI [label="GET /status/{id}\nGET /download/{id}/aligned.fasta"];
+    
+    FastAPI -> Flower [style=dashed, label="monitor"];
+    Postgres -> FastAPI [label="Task metadata"];
+    
+    // Примечания
+    note [label="Примечание:\n• Для production: добавить S3, rate-limiting, API keys, очистку старых задач\n• Whole-genome MSA тысяч seq — требует мощных серверов (память/CPU)\n• Рекомендуется ограничивать max_sequences=200-500 для генов", shape=note, fontsize=8, color="#666666"];
+}
