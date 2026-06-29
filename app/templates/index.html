@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .section-title { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.03em; }
+        .section-title { font-size: 1.95rem; font-weight: 700; letter-spacing: -0.03em; }
     </style>
 </head>
 <body class="bg-slate-50">
     <nav class="bg-white border-b">
-        <div class="max-w-screen-2xl mx-auto px-12 h-16 flex items-center justify-between">
+        <div class="max-w-[1700px] mx-auto px-14 h-16 flex items-center justify-between">
             <div class="flex items-center gap-x-3">
                 <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
                     <i class="fa-solid fa-dna text-white text-2xl"></i>
@@ -27,9 +27,8 @@
         </div>
     </nav>
 
-    <div class="max-w-screen-2xl mx-auto px-12 pt-8 pb-12">
+    <div class="max-w-[1700px] mx-auto px-14 pt-8 pb-12">
         
-        <!-- Заголовок -->
         <div class="max-w-4xl mb-8">
             <h1 class="section-title mb-3">Множественное выравнивание геномных последовательностей</h1>
             <p class="text-slate-600 text-lg">Скачивайте данные из NCBI, Ensembl и EBI, выполняйте выравнивание и получайте консенсус.</p>
@@ -38,12 +37,12 @@
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
             
             <!-- Форма (очень широкая) -->
-            <div class="xl:col-span-9">
+            <div class="xl:col-span-10">
                 <div class="bg-white border border-slate-200 rounded-3xl p-8">
                     <h2 class="text-xl font-semibold mb-6">Новая задача</h2>
                     
                     <form id="msa-form" onsubmit="submitTask(event)">
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
                             
                             <div class="xl:col-span-2">
                                 <label class="block text-sm font-semibold text-slate-600 mb-2">Организм / Таксон <span class="text-red-500">*</span></label>
@@ -60,7 +59,7 @@
                             <div>
                                 <label class="block text-sm font-semibold text-slate-600 mb-2">Инструмент выравнивания</label>
                                 <select id="alignment_tool" class="w-full px-4 py-3 border border-slate-300 rounded-2xl bg-white">
-                                    <option value="mafft">MAFFT (рекомендуется)</option>
+                                    <option value="mafft">MAFFT</option>
                                     <option value="clustalo">Clustal Omega</option>
                                     <option value="muscle">MUSCLE</option>
                                 </select>
@@ -75,7 +74,7 @@
 
                         <div class="mt-6">
                             <label class="block text-sm font-semibold text-slate-600 mb-2">Источники данных</label>
-                            <div class="flex flex-wrap gap-x-8 gap-y-2">
+                            <div class="flex flex-wrap gap-x-8 gap-y-2 text-sm">
                                 <label class="flex items-center gap-x-2"><input type="checkbox" id="source_ncbi" checked class="accent-slate-700"> NCBI</label>
                                 <label class="flex items-center gap-x-2"><input type="checkbox" id="source_ensembl" checked class="accent-slate-700"> Ensembl</label>
                                 <label class="flex items-center gap-x-2"><input type="checkbox" id="source_ebi" class="accent-slate-700"> EBI</label>
@@ -83,7 +82,7 @@
                         </div>
 
                         <button type="submit" id="submit-btn"
-                                class="mt-8 w-full py-3.5 bg-slate-900 hover:bg-black transition text-white rounded-2xl flex items-center justify-center gap-x-2 text-base font-semibold">
+                                class="mt-8 w-full py-3.5 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center justify-center gap-x-2 text-base font-semibold">
                             <i class="fa-solid fa-play mr-2"></i>
                             <span>Запустить выравнивание</span>
                         </button>
@@ -92,43 +91,54 @@
             </div>
 
             <!-- Правая колонка -->
-            <div class="xl:col-span-3">
+            <div class="xl:col-span-2">
                 <div class="bg-white border border-slate-200 rounded-3xl p-6">
                     <h3 class="font-semibold mb-4">Как это работает</h3>
                     <div class="space-y-3 text-sm text-slate-600">
-                        <div>1. Скачиваем последовательности из выбранных баз</div>
-                        <div>2. Объединяем в один FASTA-файл</div>
-                        <div>3. Выполняем множественное выравнивание</div>
-                        <div>4. Строим консенсусную последовательность</div>
+                        <div>1. Скачиваем последовательности</div>
+                        <div>2. Объединяем в FASTA</div>
+                        <div>3. Выполняем выравнивание</div>
+                        <div>4. Строим консенсус</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Блок текущей задачи -->
+        <!-- Блок статуса задачи (полноценный) -->
         <div id="current-task-panel" class="hidden mt-8">
-            <div class="bg-white border border-slate-200 rounded-3xl p-8 max-w-[1100px]">
-                <div class="flex justify-between mb-5">
+            <div class="bg-white border border-slate-200 rounded-3xl p-8 max-w-[1200px]">
+                <div class="flex justify-between items-start mb-6">
                     <div>
                         <div class="font-semibold text-lg">Текущая задача</div>
-                        <div id="current-task-id" class="font-mono text-xs text-slate-500"></div>
+                        <div id="current-task-id" class="font-mono text-xs text-slate-500 mt-0.5"></div>
                     </div>
                     <button onclick="hideCurrentTask()" class="text-3xl text-slate-300 hover:text-slate-500">×</button>
                 </div>
 
                 <div id="task-progress">
                     <div class="flex justify-between text-sm mb-2">
-                        <div id="current-step" class="font-medium"></div>
+                        <div id="current-step" class="font-medium text-slate-700"></div>
                         <div id="progress-percent" class="font-mono text-slate-500"></div>
                     </div>
-                    <div class="h-2.5 bg-slate-100 rounded-full"><div id="progress-bar" class="h-2.5 bg-slate-700 rounded-full transition-all" style="width:0%"></div></div>
+                    <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-3 bg-slate-700 transition-all rounded-full" style="width:0%"></div>
+                    </div>
                 </div>
 
-                <div id="task-success" class="hidden mt-6">
-                    <div class="text-emerald-600 font-semibold mb-4">Задача успешно завершена</div>
-                    <div class="flex gap-3">
-                        <button onclick="downloadFile('aligned.fasta')" class="px-6 py-2.5 bg-slate-900 text-white rounded-2xl text-sm">Скачать выровненный FASTA</button>
-                        <button onclick="downloadFile('consensus.fasta')" class="px-6 py-2.5 border rounded-2xl text-sm">Скачать консенсус</button>
+                <div id="task-success" class="hidden mt-7">
+                    <div class="text-emerald-600 font-semibold mb-4 flex items-center gap-x-2 text-lg">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Задача успешно завершена</span>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="downloadFile('aligned.fasta')" 
+                                class="px-7 py-2.5 bg-slate-900 hover:bg-black text-white rounded-2xl flex items-center gap-x-2 text-sm font-medium">
+                            <i class="fa-solid fa-download"></i> Выровненный FASTA
+                        </button>
+                        <button onclick="downloadFile('consensus.fasta')" 
+                                class="px-7 py-2.5 border border-slate-300 hover:bg-slate-50 rounded-2xl flex items-center gap-x-2 text-sm font-medium">
+                            <i class="fa-solid fa-download"></i> Консенсусная последовательность
+                        </button>
                     </div>
                 </div>
             </div>
@@ -172,7 +182,7 @@
             document.getElementById('current-task-id').textContent = taskId;
             document.getElementById('progress-bar').style.width = '5%';
             document.getElementById('progress-percent').textContent = '5%';
-            document.getElementById('current-step').textContent = 'Задача принята...';
+            document.getElementById('current-step').textContent = 'Задача принята в обработку...';
             document.getElementById('task-success').classList.add('hidden');
         }
 
@@ -187,12 +197,18 @@
                 const res = await fetch(`/status/${taskId}`);
                 const task = await res.json();
 
-                document.getElementById('progress-bar').style.width = (task.progress||0)+'%';
-                document.getElementById('progress-percent').textContent = (task.progress||0)+'%';
+                document.getElementById('progress-bar').style.width = (task.progress || 0) + '%';
+                document.getElementById('progress-percent').textContent = (task.progress || 0) + '%';
                 document.getElementById('current-step').textContent = task.current_step || '';
 
-                if (task.status === 'SUCCESS') { clearInterval(pollInterval); document.getElementById('task-success').classList.remove('hidden'); }
-                if (task.status === 'FAILURE') { clearInterval(pollInterval); document.getElementById('current-step').innerHTML = `<span class="text-red-600">Ошибка</span>`; }
+                if (task.status === 'SUCCESS') {
+                    clearInterval(pollInterval);
+                    document.getElementById('task-success').classList.remove('hidden');
+                }
+                if (task.status === 'FAILURE') {
+                    clearInterval(pollInterval);
+                    document.getElementById('current-step').innerHTML = `<span class="text-red-600 font-medium">Ошибка выполнения задачи</span>`;
+                }
             }, 2000);
         }
 
