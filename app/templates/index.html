@@ -8,16 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        .section-title { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.025em; color: #0f172a; }
-        .card { border: 1px solid #e2e8f0; transition: box-shadow .2s; }
-        .form-label { font-weight: 600; color: #334155; font-size: 0.875rem; }
+        .section-title { font-size: 1.85rem; font-weight: 700; letter-spacing: -0.03em; color: #0f172a; }
+        .card { border: 1px solid #e2e8f0; }
+        .form-label { font-weight: 600; color: #334155; font-size: 0.9rem; }
         .btn-primary { background-color: #1e40af; color: white; font-weight: 600; }
         .btn-primary:hover { background-color: #1e3a8a; }
     </style>
 </head>
 <body class="bg-slate-50">
+    <!-- Navbar -->
     <nav class="bg-white border-b">
-        <div class="max-w-screen-xl mx-auto px-8 h-16 flex items-center justify-between">
+        <div class="max-w-[1400px] mx-auto px-10 h-16 flex items-center justify-between">
             <div class="flex items-center gap-x-3">
                 <div class="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center">
                     <i class="fa-solid fa-dna text-white text-2xl"></i>
@@ -31,58 +32,67 @@
         </div>
     </nav>
 
-    <div class="max-w-screen-xl mx-auto px-8 pt-10 pb-16">
-        <div class="max-w-2xl mb-8">
+    <div class="max-w-[1400px] mx-auto px-10 pt-8 pb-12">
+        <div class="max-w-3xl mb-8">
             <h1 class="section-title mb-3">Множественное выравнивание геномных последовательностей</h1>
-            <p class="text-slate-600">Скачивайте данные из NCBI, Ensembl и EBI, выполняйте выравнивание и получайте консенсусную последовательность.</p>
+            <p class="text-slate-600 text-lg">Скачивайте данные из NCBI, Ensembl и EBI, выполняйте выравнивание и получайте консенсус.</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Форма -->
-            <div class="lg:col-span-7">
+            
+            <!-- Форма (теперь шире) -->
+            <div class="lg:col-span-8">
                 <div class="card bg-white rounded-3xl p-8">
                     <h2 class="text-xl font-semibold mb-6">Новая задача</h2>
                     
                     <form id="msa-form" onsubmit="submitTask(event)">
-                        <div class="mb-5">
-                            <label class="form-label block mb-2">Организм / Таксон <span class="text-red-500">*</span></label>
-                            <input type="text" id="organism" required value="Escherichia coli"
-                                   class="w-full px-4 py-3 border border-slate-300 rounded-2xl">
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Организм -->
+                            <div class="md:col-span-2">
+                                <label class="form-label block mb-2">Организм / Таксон <span class="text-red-500">*</span></label>
+                                <input type="text" id="organism" required value="Escherichia coli"
+                                       class="w-full px-4 py-3 border border-slate-300 rounded-2xl text-lg">
+                            </div>
 
-                        <div class="mb-5">
-                            <label class="form-label block mb-2">Ген (опционально)</label>
-                            <input type="text" id="gene" placeholder="rpoB, gyrB..."
-                                   class="w-full px-4 py-3 border border-slate-300 rounded-2xl">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-5 mb-5">
+                            <!-- Ген -->
                             <div>
-                                <label class="form-label block mb-2">Инструмент</label>
+                                <label class="form-label block mb-2">Ген (опционально)</label>
+                                <input type="text" id="gene" placeholder="rpoB, gyrB, recA..."
+                                       class="w-full px-4 py-3 border border-slate-300 rounded-2xl">
+                            </div>
+
+                            <!-- Инструмент -->
+                            <div>
+                                <label class="form-label block mb-2">Инструмент выравнивания</label>
                                 <select id="alignment_tool" class="w-full px-4 py-3 border border-slate-300 rounded-2xl bg-white">
                                     <option value="mafft">MAFFT (рекомендуется)</option>
                                     <option value="clustalo">Clustal Omega</option>
                                     <option value="muscle">MUSCLE</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="form-label block mb-2">Макс. последовательностей</label>
-                                <input type="number" id="max_sequences" value="60" min="10" max="300"
-                                       class="w-full px-4 py-3 border border-slate-300 rounded-2xl">
-                            </div>
                         </div>
 
-                        <div class="mb-6">
-                            <label class="form-label block mb-2">Источники данных</label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center gap-x-2"><input type="checkbox" id="source_ncbi" checked> NCBI</label>
-                                <label class="flex items-center gap-x-2"><input type="checkbox" id="source_ensembl" checked> Ensembl</label>
-                                <label class="flex items-center gap-x-2"><input type="checkbox" id="source_ebi"> EBI</label>
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Max sequences -->
+                            <div>
+                                <label class="form-label block mb-2">Максимум последовательностей</label>
+                                <input type="number" id="max_sequences" value="80" min="10" max="300"
+                                       class="w-full px-4 py-3 border border-slate-300 rounded-2xl">
+                            </div>
+
+                            <!-- Источники -->
+                            <div class="md:col-span-2">
+                                <label class="form-label block mb-2">Источники данных</label>
+                                <div class="flex flex-wrap gap-x-6 gap-y-2">
+                                    <label class="flex items-center gap-x-2 text-sm"><input type="checkbox" id="source_ncbi" checked class="accent-slate-700"> NCBI</label>
+                                    <label class="flex items-center gap-x-2 text-sm"><input type="checkbox" id="source_ensembl" checked class="accent-slate-700"> Ensembl</label>
+                                    <label class="flex items-center gap-x-2 text-sm"><input type="checkbox" id="source_ebi" class="accent-slate-700"> EBI</label>
+                                </div>
                             </div>
                         </div>
 
                         <button type="submit" id="submit-btn"
-                                class="w-full py-3.5 btn-primary rounded-2xl flex items-center justify-center gap-x-2">
+                                class="mt-8 w-full py-3.5 btn-primary rounded-2xl flex items-center justify-center gap-x-2 text-base">
                             <i class="fa-solid fa-play mr-2"></i>
                             <span>Запустить выравнивание</span>
                         </button>
@@ -91,41 +101,57 @@
             </div>
 
             <!-- Правая колонка -->
-            <div class="lg:col-span-5">
-                <div class="card bg-white rounded-3xl p-6">
-                    <h3 class="font-semibold mb-4">Как это работает</h3>
-                    <div class="space-y-2 text-sm text-slate-600">
-                        <div>1. Скачиваем последовательности из выбранных баз</div>
-                        <div>2. Объединяем в один FASTA-файл</div>
-                        <div>3. Выполняем множественное выравнивание</div>
-                        <div>4. Строим консенсусную последовательность</div>
+            <div class="lg:col-span-4">
+                <div class="card bg-white rounded-3xl p-6 h-fit">
+                    <h3 class="font-semibold mb-4 flex items-center gap-x-2">
+                        <i class="fa-solid fa-info-circle text-slate-400"></i>
+                        <span>Как это работает</span>
+                    </h3>
+                    <div class="space-y-3 text-sm text-slate-600">
+                        <div class="flex gap-3"><span class="font-mono text-xs bg-slate-100 px-2 rounded">1</span> Скачиваем последовательности из выбранных баз</div>
+                        <div class="flex gap-3"><span class="font-mono text-xs bg-slate-100 px-2 rounded">2</span> Объединяем в один FASTA-файл</div>
+                        <div class="flex gap-3"><span class="font-mono text-xs bg-slate-100 px-2 rounded">3</span> Выполняем множественное выравнивание</div>
+                        <div class="flex gap-3"><span class="font-mono text-xs bg-slate-100 px-2 rounded">4</span> Строим консенсусную последовательность</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Блок текущей задачи -->
-        <div id="current-task-panel" class="hidden mt-8">
+        <div id="current-task-panel" class="hidden mt-8 max-w-[900px]">
             <div class="card bg-white rounded-3xl p-8">
-                <div class="flex justify-between mb-4">
+                <div class="flex justify-between items-start mb-5">
                     <div>
-                        <div class="font-semibold">Текущая задача</div>
-                        <div id="current-task-id" class="font-mono text-xs text-slate-500"></div>
+                        <div class="font-semibold text-lg">Текущая задача</div>
+                        <div id="current-task-id" class="font-mono text-xs text-slate-500 mt-0.5"></div>
                     </div>
-                    <button onclick="hideCurrentTask()" class="text-2xl text-slate-400">×</button>
+                    <button onclick="hideCurrentTask()" class="text-3xl leading-none text-slate-300 hover:text-slate-500">×</button>
                 </div>
+
                 <div id="task-progress">
-                    <div class="flex justify-between text-sm mb-1">
-                        <div id="current-step"></div>
-                        <div id="progress-percent"></div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <div id="current-step" class="font-medium"></div>
+                        <div id="progress-percent" class="font-mono text-slate-500"></div>
                     </div>
-                    <div class="h-2 bg-slate-100 rounded-full"><div id="progress-bar" class="h-2 bg-slate-700 rounded-full transition-all" style="width:0%"></div></div>
+                    <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div id="progress-bar" class="h-2.5 bg-slate-700 transition-all rounded-full" style="width:0%"></div>
+                    </div>
                 </div>
+
                 <div id="task-success" class="hidden mt-6">
-                    <div class="text-emerald-600 font-semibold mb-3">Задача завершена</div>
+                    <div class="text-emerald-600 font-semibold mb-4 flex items-center gap-x-2">
+                        <i class="fa-solid fa-check-circle"></i>
+                        <span>Задача успешно завершена</span>
+                    </div>
                     <div class="flex gap-3">
-                        <button onclick="downloadFile('aligned.fasta')" class="px-5 py-2 bg-slate-900 text-white rounded-2xl text-sm">Скачать выровненный FASTA</button>
-                        <button onclick="downloadFile('consensus.fasta')" class="px-5 py-2 border rounded-2xl text-sm">Скачать консенсус</button>
+                        <button onclick="downloadFile('aligned.fasta')" 
+                                class="px-6 py-2.5 bg-slate-900 hover:bg-black transition text-white rounded-2xl text-sm flex items-center gap-x-2">
+                            <i class="fa-solid fa-download"></i> Выровненный FASTA
+                        </button>
+                        <button onclick="downloadFile('consensus.fasta')" 
+                                class="px-6 py-2.5 border border-slate-300 hover:bg-slate-50 rounded-2xl text-sm flex items-center gap-x-2">
+                            <i class="fa-solid fa-download"></i> Консенсус
+                        </button>
                     </div>
                 </div>
             </div>
@@ -133,14 +159,12 @@
     </div>
 
     <script>
-        let currentTaskId = null;
-        let pollInterval = null;
+        let currentTaskId = null, pollInterval = null;
 
         async function submitTask(e) {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
-            btn.disabled = true;
-            btn.innerHTML = 'Отправка...';
+            btn.disabled = true; btn.innerHTML = 'Отправка...';
 
             const sources = [];
             if (document.getElementById('source_ncbi').checked) sources.push('ncbi');
@@ -156,7 +180,7 @@
                 use_mock_data: false
             };
 
-            const res = await fetch('/msa', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            const res = await fetch('/msa', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
             const data = await res.json();
             showTask(data.task_id);
             startPolling(data.task_id);
@@ -171,7 +195,7 @@
             document.getElementById('current-task-id').textContent = taskId;
             document.getElementById('progress-bar').style.width = '5%';
             document.getElementById('progress-percent').textContent = '5%';
-            document.getElementById('current-step').textContent = 'Задача принята...';
+            document.getElementById('current-step').textContent = 'Задача принята в обработку...';
             document.getElementById('task-success').classList.add('hidden');
         }
 
@@ -186,19 +210,13 @@
                 const res = await fetch(`/status/${taskId}`);
                 const task = await res.json();
 
-                document.getElementById('progress-bar').style.width = (task.progress || 0) + '%';
-                document.getElementById('progress-percent').textContent = (task.progress || 0) + '%';
+                document.getElementById('progress-bar').style.width = (task.progress||0)+'%';
+                document.getElementById('progress-percent').textContent = (task.progress||0)+'%';
                 document.getElementById('current-step').textContent = task.current_step || '';
 
-                if (task.status === 'SUCCESS') {
-                    clearInterval(pollInterval);
-                    document.getElementById('task-success').classList.remove('hidden');
-                }
-                if (task.status === 'FAILURE') {
-                    clearInterval(pollInterval);
-                    document.getElementById('current-step').innerHTML = `<span class="text-red-600">Ошибка</span>`;
-                }
-            }, 2000);
+                if (task.status === 'SUCCESS') { clearInterval(pollInterval); document.getElementById('task-success').classList.remove('hidden'); }
+                if (task.status === 'FAILURE') { clearInterval(pollInterval); document.getElementById('current-step').innerHTML = `<span class="text-red-600">Ошибка выполнения</span>`; }
+            }, 2200);
         }
 
         function downloadFile(filename) {
